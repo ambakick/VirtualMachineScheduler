@@ -9,14 +9,15 @@ import javax.persistence.*;
 
 @Data
 @Entity
+@Table(name = "User")
 @AllArgsConstructor
 @NoArgsConstructor
 @Slf4j
 public class User {
 
     @Id
-    @GeneratedValue
-    private Long userID;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private int userID;
 
     private String username;
     @Column(name = "roletype")

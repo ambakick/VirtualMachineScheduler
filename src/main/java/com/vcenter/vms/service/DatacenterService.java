@@ -1,6 +1,8 @@
 package com.vcenter.vms.service;
 
+import com.vcenter.vms.model.Cluster;
 import com.vcenter.vms.model.Datacenter;
+import com.vcenter.vms.model.Summary;
 import com.vcenter.vms.repository.DatacenterRepository;
 import lombok.var;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,39 +12,52 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Service
-public class DatacenterService {
+public class DatacenterService implements DatacenterServiceInterface {
     @Autowired
     private DatacenterRepository datacenterRepository;
 
+    @Autowired
+    private ClusterService clusterService;
+
     public List<Datacenter> findAll() {
 
-        var it = datacenterRepository.findAll();
-
-        var dataCenters = new ArrayList<Datacenter>();
-        it.forEach(e -> dataCenters.add(e));
-
-        return dataCenters;
+        return (List<Datacenter>) datacenterRepository.findAll();
     }
 
-    public Datacenter findById(Long datacenterID) {
+    public Datacenter findById(Integer datacenterID) {
 
         List<Datacenter> datacenters = findAll();
-
+        Datacenter datacenterObj = null;
+        Summary summary = aggregation(datacenterID);
         for(Datacenter datacenter : datacenters) {
-            if (datacenter.getDatacenterID().equals(datacenterID))
-                return datacenter;
+            if (datacenter.getDatacenterID() == datacenterID){
+                datacenterObj = datacenter;
+                break;
+            }
         }
-
-        return null;
+        datacenterObj.setNoOfClusters(summary.getNoOfClusters());
+        datacenterObj.setNoOfHosts(summary.getNoOfClusters());
+        datacenterObj.setNoOfVms(summary.getNoOfVms());
+        datacenterRepository.save(datacenterObj);
+        return datacenterObj;
     }
 
-    public Long count() {
+    public int deleteById(Integer datacenterID) {
 
-        return datacenterRepository.count();
+        List<Cluster> listOfClusters = clusterService.clustersInDatacenter(datacenterID);
+        for(Cluster cluster:listOfClusters){
+
+            clusterService.deleteById(cluster.getClusterID());
+        }
+        datacenterRepository.deleteById(datacenterID);
+        return listOfClusters.size();
     }
 
-    public void deleteById(Long userId) {
+    public void save(Datacenter datacenter){
+        datacenterRepository.save(datacenter);
+    }
 
-        datacenterRepository.deleteById(userId);
+    public Summary aggregation(Integer datacenterID){
+        return datacenterRepository.aggregation(datacenterID);
     }
 }

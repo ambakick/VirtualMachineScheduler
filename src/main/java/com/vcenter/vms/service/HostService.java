@@ -1,65 +1,57 @@
 package com.vcenter.vms.service;
 
 import com.vcenter.vms.model.Host;
-import com.vcenter.vms.model.VirtualMachine;
 import com.vcenter.vms.repository.HostRepository;
-import lombok.var;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
 import java.util.List;
 
 @Service
-public class HostService {
+public class HostService implements HostServiceInterface{
 
     @Autowired
     private HostRepository hostRepository;
 
+    @Autowired
+    private VirtualMachineService vmService;
+
     public List<Host> findAll(){
 
-        var it = hostRepository.findAll();
-
-        var hosts = new ArrayList<Host>();
-        it.forEach(e -> hosts.add(e));
-
-        return hosts;
+        return (List<Host>) hostRepository.findAll();
     }
 
-    public Host findById (Long hostID){
+    public Host findById (Integer hostID){
         List<Host> hosts = findAll();
 
         for(Host host : hosts) {
-            if (host.getHostID().equals(hostID))
+            if (host.getHostID() == hostID)
                 return host;
         }
 
         return null;
     }
 
-    public int countHostsInCluster (Long clusterID){
-
-        return hostRepository.countHostsInCluster(clusterID);
-    }
-
-    public List<Integer> listHostsInCluster(Long clusterID) {
-
-        return hostRepository.listHostsInCluster(clusterID);
-    }
-
-    public List<Host> hostsInCluster(Long clusterID) {
+    public List<Host> hostsInCluster(Integer clusterID) {
 
         return hostRepository.hostsInCluster(clusterID);
     }
 
+    public void updateHostOnDeletion(Integer hostID, int coresReleased, int memReleased){
 
-    public Long count() {
-
-        return hostRepository.count();
+        Host host = findById(hostID);
+        int allocatedCores = host.getAllottedCores() - coresReleased;
+        int allocatedMem = host.getAllottedMem() - memReleased;
+        hostRepository.updateAllocatedData(hostID, allocatedCores, allocatedMem);
     }
 
-    public void deleteById(Long userId) {
+    public int deleteById(Integer hostID) {
+        int deletedVMs = vmService.deleteVmsInHost(hostID);
+        hostRepository.deleteById(hostID);
+        return deletedVMs;
+    }
 
-        hostRepository.deleteById(userId);
+    public void save (Host host){
+        hostRepository.save(host);
     }
 }

@@ -10,52 +10,60 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Service
-public class VirtualMachineService {
+public class VirtualMachineService implements VirtualMachineServiceInterface {
     @Autowired
     private VirtualMachineRepository vmRepo;
 
+    @Autowired
+    private HostService hostService;
+
+
     public List<VirtualMachine> findAll() {
 
-        var it = vmRepo.findAll();
-
-        var vms = new ArrayList<VirtualMachine>();
-        it.forEach(e -> vms.add(e));
-
-        return vms;
+        return (List<VirtualMachine>) vmRepo.findAll();
     }
 
-    public VirtualMachine findById(Long userID) {
+    public VirtualMachine findById(Integer vmID) {
 
         List<VirtualMachine> vms = findAll();
 
         for(VirtualMachine vm : vms) {
-            if (vm.getVmID().equals(userID))
+            if (vm.getVmID() == vmID)
                 return vm;
         }
-
         return null;
     }
 
-    public int countVmsInHost(Long hostID){
-        return vmRepo.countVmsInHost(hostID);
-    }
-
-
-    public List<Integer> listVmsInHost(Long hostID) {
-        return vmRepo.listVmsInHost(hostID);
-    }
-
-    public List<VirtualMachine> vmsInHost(Long hostID) {
+    public List<VirtualMachine> vmsInHost(Integer hostID) {
         return vmRepo.vmsInHost(hostID);
     }
 
-    public Long count() {
-
-        return vmRepo.count();
+    public void deleteById(Integer vmID) {
+        updateHostOnDeletion(vmID);
+        vmRepo.deleteById(vmID);
     }
 
-    public void deleteById(Long userId) {
+    public void updateHostOnDeletion(Integer vmID){
 
-        vmRepo.deleteById(userId);
+        VirtualMachine virtualMachine = findById(vmID);
+        int coresReleased = virtualMachine.getCpuCores();
+        int memReleased = virtualMachine.getMemResource();
+        hostService.updateHostOnDeletion(virtualMachine.getHostID(), coresReleased, memReleased);
+    }
+
+    public void updateHost(Integer vmID, int newCpuCores, int newMem){
+
+        VirtualMachine virtualMachine = findById(vmID);
+        int coresReleased = virtualMachine.getCpuCores();
+        int memReleased = virtualMachine.getMemResource();
+        hostService.updateHostOnDeletion(virtualMachine.getHostID(), coresReleased, memReleased);
+    }
+
+    public int deleteVmsInHost(Integer hostID){
+        return vmRepo.deleteVmsInHost(hostID);
+    }
+
+    public void save (VirtualMachine virtualMachine){
+        vmRepo.save(virtualMachine);
     }
 }

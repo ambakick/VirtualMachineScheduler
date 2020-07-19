@@ -2,11 +2,9 @@ package com.vcenter.vms.service;
 
 import com.vcenter.vms.model.User;
 import com.vcenter.vms.repository.UserRepository;
-import lombok.var;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -17,32 +15,22 @@ public class UserService {
 
     public List<User> findAll() {
 
-        var it = userRepository.findAll();
-
-        var users = new ArrayList<User>();
-        it.forEach(e -> users.add(e));
-
-        return users;
+        return (List<User>) userRepository.findAll();
     }
 
-    public User findById(Long userID) {
+    public User findById(Integer userID) {
 
         List<User> users = findAll();
 
         for(User user : users) {
-            if (user.getUserID().equals(userID))
+            if (user.getUserID() == userID)
                 return user;
         }
 
         return null;
     }
 
-    public Long count() {
-
-        return userRepository.count();
-    }
-
-    public void deleteById(Long userId) {
+    public void deleteById(Integer userId) {
 
         userRepository.deleteById(userId);
     }
